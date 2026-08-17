@@ -57,7 +57,7 @@ public final class GolemSpinGoal extends Goal implements WarbandGoal {
             Vec3 away = threat.position().subtract(golem.position());
             if (away.lengthSqr() < 0.001) continue;
             Vec3 dir = away.normalize();
-            threat.knockback(1.8, -dir.x, -dir.z);
+            threat.knockback(1.8, -dir.x, -dir.z, golem.damageSources().mobAttack(golem), 0.0f);
             threat.hurtServer(level, golem.damageSources().mobAttack(golem), 5.0f);
         }
 

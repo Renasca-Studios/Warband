@@ -25,11 +25,11 @@ public final class FactionBanner {
 
     private static Item bannerItem(IllagerFaction faction) {
         return switch (faction) {
-            case BLACK_HORN -> Items.BLACK_BANNER;
-            case RED_LEDGER -> Items.RED_BANNER;
-            case PALE_AXE -> Items.WHITE_BANNER;
-            case ASH_BANNER -> Items.ORANGE_BANNER;
-            case IRON_CHOIR -> Items.GRAY_BANNER;
+            case BLACK_HORN -> Items.BANNER.black();
+            case RED_LEDGER -> Items.BANNER.red();
+            case PALE_AXE -> Items.BANNER.white();
+            case ASH_BANNER -> Items.BANNER.orange();
+            case IRON_CHOIR -> Items.BANNER.gray();
         };
     }
 }

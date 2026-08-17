@@ -56,18 +56,19 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Blaze;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.EnderMan;
 import net.minecraft.world.entity.monster.Ghast;
 import net.minecraft.world.entity.monster.Guardian;
-import net.minecraft.world.entity.monster.MagmaCube;
+import net.minecraft.world.entity.monster.cubemob.MagmaCube;
 import net.minecraft.world.entity.monster.Phantom;
 import net.minecraft.world.entity.monster.Ravager;
 import net.minecraft.world.entity.monster.Shulker;
 import net.minecraft.world.entity.monster.RangedAttackMob;
-import net.minecraft.world.entity.monster.Slime;
+import net.minecraft.world.entity.monster.cubemob.Slime;
 import net.minecraft.world.entity.monster.Witch;
 import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.entity.monster.Zoglin;
@@ -82,6 +83,7 @@ import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.entity.monster.zombie.ZombifiedPiglin;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -223,7 +225,7 @@ public final class SquadCoordinator {
         int size = Math.min(WarbandConfig.maxSquadSize, 3 + (int) Math.round(difficulty * 3.0));
         for (int i = 0; i < size; i++) {
             BlockPos pos = origin.offset((i % 3) - 1, 0, 2 + (i / 3));
-            Zombie zombie = EntityType.ZOMBIE.spawn(level, pos, EntitySpawnReason.COMMAND);
+            Zombie zombie = EntityTypes.ZOMBIE.spawn(level, pos, EntitySpawnReason.COMMAND);
             if (zombie == null) continue;
 
             Role role = switch (i) {
@@ -289,7 +291,7 @@ public final class SquadCoordinator {
             if (other == origin || other.isEmpty()) continue;
             if (other.level() != origin.level()) continue;
             if (other.target() != null) continue;
-            if (other.center().distanceToSqr(near.getCenter()) > BACKUP_RADIUS * BACKUP_RADIUS) continue;
+            if (other.center().distanceToSqr(Vec3.atCenterOf(near)) > BACKUP_RADIUS * BACKUP_RADIUS) continue;
             other.alertTo(near);
         }
     }
@@ -298,7 +300,7 @@ public final class SquadCoordinator {
         int cap = effectiveMaxSquadSize(squad.level(), near);
         if (squad.members().size() >= cap) return false;
 
-        AABB box = AABB.ofSize(near.getCenter(), BACKUP_RADIUS * 2.0, BACKUP_RADIUS, BACKUP_RADIUS * 2.0);
+        AABB box = AABB.ofSize(Vec3.atCenterOf(near), BACKUP_RADIUS * 2.0, BACKUP_RADIUS, BACKUP_RADIUS * 2.0);
         List<Mob> candidates = squad.level().getEntitiesOfClass(Mob.class, box, mob -> {
             MobData data = MobData.get(mob);
             return data.squadId() != squad.id()
@@ -335,7 +337,7 @@ public final class SquadCoordinator {
         List<String> lines = new ArrayList<>();
         for (Squad squad : SQUADS.values()) {
             if (squad.level() != level || squad.isEmpty()) continue;
-            if (squad.center().distanceToSqr(pos.getCenter()) > SMART_SCAN_RADIUS * SMART_SCAN_RADIUS) continue;
+            if (squad.center().distanceToSqr(Vec3.atCenterOf(pos)) > SMART_SCAN_RADIUS * SMART_SCAN_RADIUS) continue;
             String lastKnown = squad.lastKnownPos() == null
                     ? "none"
                     : squad.lastKnownPos().getX() + " " + squad.lastKnownPos().getY() + " " + squad.lastKnownPos().getZ();
@@ -692,7 +694,7 @@ public final class SquadCoordinator {
         for (Squad squad : SQUADS.values()) {
             if (squad.level() != level || squad.members().size() >= cap) continue;
             if (squad.members().isEmpty() || !sameSquadFamily(squad.members().getFirst(), mob)) continue;
-            double dist = squad.center().distanceToSqr(pos.getCenter());
+            double dist = squad.center().distanceToSqr(Vec3.atCenterOf(pos));
             if (dist < bestDist) {
                 best = squad;
                 bestDist = dist;

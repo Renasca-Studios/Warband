@@ -20,7 +20,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntitySpawnReason;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -230,7 +230,7 @@ public final class SpawnDirector {
         if (!(mob instanceof net.minecraft.world.entity.monster.illager.AbstractIllager)) return mob;
         if (!(mob.level() instanceof ServerLevel level)) return mob;
         net.minecraft.world.entity.monster.illager.Illusioner illusioner =
-                EntityType.ILLUSIONER.create(level, EntitySpawnReason.EVENT);
+                EntityTypes.ILLUSIONER.create(level, EntitySpawnReason.EVENT);
         if (illusioner == null) return mob;
         illusioner.snapTo(mob.getX(), mob.getY(), mob.getZ(), mob.getYRot(), mob.getXRot());
         var factionData = mob.getAttached(WarbandAttachments.ILLAGER_FACTION);
@@ -271,7 +271,7 @@ public final class SpawnDirector {
         double chance = (difficulty - 0.55) * 0.67;
         if (creeper.getRandom().nextDouble() >= chance) return;
 
-        LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(level, EntitySpawnReason.EVENT);
+        LightningBolt bolt = EntityTypes.LIGHTNING_BOLT.create(level, EntitySpawnReason.EVENT);
         if (bolt == null) return;
         bolt.snapTo(creeper.getX(), creeper.getY(), creeper.getZ());
         bolt.setVisualOnly(true);

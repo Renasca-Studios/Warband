@@ -13,6 +13,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.PatrollingMonster;
 import net.minecraft.world.entity.raid.Raid;
@@ -80,11 +81,11 @@ public final class RaidEvolutionHandler {
 
     private static net.minecraft.world.item.Item bannerItemFor(IllagerFaction faction) {
         return switch (faction) {
-            case BLACK_HORN -> Items.BLACK_BANNER;
-            case RED_LEDGER -> Items.RED_BANNER;
-            case PALE_AXE -> Items.WHITE_BANNER;
-            case ASH_BANNER -> Items.ORANGE_BANNER;
-            case IRON_CHOIR -> Items.GRAY_BANNER;
+            case BLACK_HORN -> Items.BANNER.black();
+            case RED_LEDGER -> Items.BANNER.red();
+            case PALE_AXE -> Items.BANNER.white();
+            case ASH_BANNER -> Items.BANNER.orange();
+            case IRON_CHOIR -> Items.BANNER.gray();
         };
     }
 
@@ -172,7 +173,7 @@ public final class RaidEvolutionHandler {
         Raider firstSpawn = null;
         for (int i = 0; i < size; i++) {
             BlockPos pos = center.offset(level.getRandom().nextInt(17) - 8, 0, level.getRandom().nextInt(17) - 8);
-            EntityType<? extends Mob> type = i == 0 ? EntityType.VINDICATOR : EntityType.PILLAGER;
+            EntityType<? extends Mob> type = i == 0 ? EntityTypes.VINDICATOR : EntityTypes.PILLAGER;
             Mob spawned = type.spawn(level, pos, EntitySpawnReason.EVENT);
             if (!(spawned instanceof Raider rivalRaider)) continue;
             IllagerFactionSystem.setFaction(rivalRaider, rival);

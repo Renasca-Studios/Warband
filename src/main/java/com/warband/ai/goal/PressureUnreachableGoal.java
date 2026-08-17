@@ -43,7 +43,7 @@ public final class PressureUnreachableGoal extends SquadGoal {
             return true;
         }
 
-        if (mob.distanceToSqr(pressurePoint.getCenter()) < 8.0 * 8.0) return false;
+        if (mob.distanceToSqr(Vec3.atCenterOf(pressurePoint)) < 8.0 * 8.0) return false;
 
         boolean stalled = mob.getNavigation().isDone() || mob.getNavigation().isStuck();
         if (!stalled) return false;
@@ -53,7 +53,7 @@ public final class PressureUnreachableGoal extends SquadGoal {
             return true;
         }
         Vec3 offset = new Vec3(mob.getRandom().nextInt(9) - 4, 0, mob.getRandom().nextInt(9) - 4);
-        searchPos = BlockPos.containing(pressurePoint.getCenter().add(offset));
+        searchPos = BlockPos.containing(Vec3.atCenterOf(pressurePoint).add(offset));
         action = Action.SEARCH;
         return true;
     }

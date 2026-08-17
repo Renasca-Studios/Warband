@@ -25,6 +25,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.PatrollingMonster;
@@ -32,6 +33,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -562,7 +564,7 @@ public final class IllagerGrudgeSystem {
         }
 
         maybeSpawnRivalInterception(player, grudges.getFirst(), origin, difficulty, spawned);
-        TacticalEffects.arrivalCue(level, origin.getCenter(), TacticalEffects.ArrivalCue.REVENGE);
+        TacticalEffects.arrivalCue(level, Vec3.atCenterOf(origin), TacticalEffects.ArrivalCue.REVENGE);
         player.sendSystemMessage(Component.translatableWithFallback("warband.revenge.arrival",
                 "Familiar horns answer from the %s.", faction.displayName()), true);
         for (Component boast : boasts) {
@@ -655,7 +657,7 @@ public final class IllagerGrudgeSystem {
         if (spawned.isEmpty()) return false;
         SquadCoordinator.createSquad(level, spawned, difficulty);
         for (Mob mob : spawned) directVengeancePursuit(mob, player);
-        TacticalEffects.arrivalCue(level, origin.getCenter(), TacticalEffects.ArrivalCue.WAR_PATROL);
+        TacticalEffects.arrivalCue(level, Vec3.atCenterOf(origin), TacticalEffects.ArrivalCue.WAR_PATROL);
         player.sendSystemMessage(Component.translatableWithFallback("warband.patrol.arrival",
                 "A war patrol of the %s moves to find you.", reputation.faction().displayName()), true);
         WarbandCriteria.fire(player, WarbandCriteria.FACTION_AT_WAR);
@@ -694,7 +696,7 @@ public final class IllagerGrudgeSystem {
         leader.setCustomName(WarbandText.titleOfFaction("warband.title.crusade_captain", "Crusade Captain",
                 reputation.faction()));
         for (Mob mob : spawned) directVengeancePursuit(mob, player);
-        TacticalEffects.arrivalCue(level, origin.getCenter(), TacticalEffects.ArrivalCue.CRUSADE);
+        TacticalEffects.arrivalCue(level, Vec3.atCenterOf(origin), TacticalEffects.ArrivalCue.CRUSADE);
         player.sendSystemMessage(Component.translatableWithFallback("warband.crusade.arrival",
                 "A crusade of the %s has come for you.", reputation.faction().displayName()), true);
         WarbandCriteria.fire(player, WarbandCriteria.CRUSADE_CALLED);
@@ -707,7 +709,7 @@ public final class IllagerGrudgeSystem {
         if (origin == null) return false;
 
         double difficulty = Math.min(1.0, 0.75 + reputation.heat() / 500.0);
-        Mob hunter = EntityType.PILLAGER.spawn(level, origin, EntitySpawnReason.EVENT);
+        Mob hunter = EntityTypes.PILLAGER.spawn(level, origin, EntitySpawnReason.EVENT);
         if (hunter == null) return false;
         IllagerFactionSystem.setFaction(hunter, reputation.faction());
         markGrudgeSpawned(hunter);
@@ -744,7 +746,7 @@ public final class IllagerGrudgeSystem {
                 net.minecraft.sounds.SoundEvents.EVOKER_PREPARE_SUMMON, net.minecraft.sounds.SoundSource.HOSTILE, 0.9f, 0.55f);
         level.playSound(null, player.getX(), player.getY(), player.getZ(),
                 net.minecraft.sounds.SoundEvents.RAID_HORN.value(), net.minecraft.sounds.SoundSource.HOSTILE, 0.6f, 0.55f);
-        TacticalEffects.arrivalCue(level, origin.getCenter(), TacticalEffects.ArrivalCue.BOUNTY);
+        TacticalEffects.arrivalCue(level, Vec3.atCenterOf(origin), TacticalEffects.ArrivalCue.BOUNTY);
         player.sendSystemMessage(Component.translatableWithFallback("warband.bounty.arrival",
                 "A bounty hunter from the %s has your trail.", reputation.faction().displayName()), true);
         WarbandCriteria.fire(player, WarbandCriteria.BOUNTY_SUMMONED);
@@ -787,9 +789,9 @@ public final class IllagerGrudgeSystem {
     }
 
     private static Mob spawnMember(ServerLevel level, BlockPos pos, double difficulty, int index) {
-        EntityType<? extends Mob> type = EntityType.PILLAGER;
-        if (difficulty >= 0.70 && index == 1) type = EntityType.VINDICATOR;
-        if (difficulty >= 0.85 && index == 2) type = EntityType.EVOKER;
+        EntityType<? extends Mob> type = EntityTypes.PILLAGER;
+        if (difficulty >= 0.70 && index == 1) type = EntityTypes.VINDICATOR;
+        if (difficulty >= 0.85 && index == 2) type = EntityTypes.EVOKER;
         return type.spawn(level, pos, EntitySpawnReason.EVENT);
     }
 
@@ -821,7 +823,7 @@ public final class IllagerGrudgeSystem {
             int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
             BlockPos pos = new BlockPos(x, y, z);
             if (level.getWorldBorder().isWithinBounds(pos)
-                    && level.noCollision(EntityType.PILLAGER.getSpawnAABB(pos.getX(), pos.getY(), pos.getZ()))) {
+                    && level.noCollision(EntityTypes.PILLAGER.getSpawnAABB(pos.getX(), pos.getY(), pos.getZ()))) {
                 return pos;
             }
         }

@@ -120,7 +120,7 @@ public final class SpiderWebGoal extends SquadGoal {
 
         ServerLevel level = (ServerLevel) mob.level();
         Vec3 from = mob.position().add(0.0, mob.getBbHeight() * 0.65, 0.0);
-        Vec3 to = webPos.getCenter();
+        Vec3 to = Vec3.atCenterOf(webPos);
         TacticalEffects.webTrail(level, from, to);
 
         if (mob.tickCount < fireAtTick) return;

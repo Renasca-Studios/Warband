@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -63,7 +64,7 @@ public final class EncounterDirector {
 
     /** Players sharing the region beyond the first, capped. */
     private static int extraNearbyPlayers(ServerLevel level, BlockPos pos) {
-        AABB box = AABB.ofSize(pos.getCenter(),
+        AABB box = AABB.ofSize(Vec3.atCenterOf(pos),
                 PLAYER_RADIUS * 2.0, PLAYER_RADIUS * 2.0, PLAYER_RADIUS * 2.0);
         int players = level.getEntitiesOfClass(Player.class, box,
                 p -> p.isAlive() && !p.isSpectator()).size();
