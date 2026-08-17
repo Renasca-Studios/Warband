@@ -9,6 +9,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.monster.cubemob.SulfurCube;
 import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -97,7 +98,13 @@ public final class DreadAvoidGoal extends Goal implements WarbandGoal {
     private Entity nearestThreat() {
         AABB blastBox = mob.getBoundingBox().inflate(BLAST_SCAN, 4.0, BLAST_SCAN);
         List<Entity> imminent = mob.level().getEntities(mob, blastBox,
-                e -> (e instanceof Creeper creeper && creeper.getSwellDir() > 0) || e instanceof PrimedTnt);
+                e -> (e instanceof Creeper creeper && creeper.getSwellDir() > 0)
+                        || e instanceof PrimedTnt
+                        // 26.2's sulfur cube. Only the explosive archetype can prime, and
+                        // it detonates at power 3 — the same as a creeper — so BLAST_SCAN
+                        // is already the right radius. isPrimed() is the exact analogue of
+                        // a creeper's swell: a cube that merely exists is not a threat.
+                        || (e instanceof SulfurCube cube && cube.isPrimed()));
         if (!imminent.isEmpty()) return closest(imminent);
 
         AABB wardenBox = mob.getBoundingBox().inflate(WARDEN_SCAN, 6.0, WARDEN_SCAN);
