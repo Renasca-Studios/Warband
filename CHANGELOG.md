@@ -12,7 +12,6 @@ First release for Minecraft 26.2.
 - Fixed creeper breaching and siege mining being starved by lower-priority combat movement, and made blast avoidance reliably outrank both.
 - Fixed core anti-cheese features only appearing on mobs that happened to win the random squad roll. Qualifying solo zombies, illagers, ravagers and creepers now receive the advertised mining or breaching behavior.
 - Fixed `squadsEnabled=false` also disabling unrelated door opening, blast avoidance, ladder climbing, siege mining and creeper breaching.
-- Added Minecraft GameTest coverage for solo zombie, creeper and vindicator goal binding and an end-to-end zombie wall breach.
 
 ## 1.4.0
 
