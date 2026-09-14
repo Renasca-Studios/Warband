@@ -56,18 +56,19 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Blaze;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.EnderMan;
 import net.minecraft.world.entity.monster.Ghast;
 import net.minecraft.world.entity.monster.Guardian;
-import net.minecraft.world.entity.monster.MagmaCube;
+import net.minecraft.world.entity.monster.cubemob.MagmaCube;
 import net.minecraft.world.entity.monster.Phantom;
 import net.minecraft.world.entity.monster.Ravager;
 import net.minecraft.world.entity.monster.Shulker;
 import net.minecraft.world.entity.monster.RangedAttackMob;
-import net.minecraft.world.entity.monster.Slime;
+import net.minecraft.world.entity.monster.cubemob.Slime;
 import net.minecraft.world.entity.monster.Witch;
 import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.entity.monster.Zoglin;
@@ -82,6 +83,7 @@ import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.entity.monster.zombie.ZombifiedPiglin;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -146,7 +148,10 @@ public final class SquadCoordinator {
                 SpawnDirector.tryStampLoaded(mob, level);
                 return;
             }
-            if (!WarbandConfig.squadsEnabled) return;
+            if (!WarbandConfig.squadsEnabled) {
+                bindCoreGoals(mob, level);
+                return;
+            }
             if (Boolean.TRUE.equals(mob.getAttached(WarbandAttachments.WARBAND_GOALS_BOUND))) return;
 
             MobData data = MobData.get(mob);
@@ -223,7 +228,7 @@ public final class SquadCoordinator {
         int size = Math.min(WarbandConfig.maxSquadSize, 3 + (int) Math.round(difficulty * 3.0));
         for (int i = 0; i < size; i++) {
             BlockPos pos = origin.offset((i % 3) - 1, 0, 2 + (i / 3));
-            Zombie zombie = EntityType.ZOMBIE.spawn(level, pos, EntitySpawnReason.COMMAND);
+            Zombie zombie = EntityTypes.ZOMBIE.spawn(level, pos, EntitySpawnReason.COMMAND);
             if (zombie == null) continue;
 
             Role role = switch (i) {
@@ -289,7 +294,7 @@ public final class SquadCoordinator {
             if (other == origin || other.isEmpty()) continue;
             if (other.level() != origin.level()) continue;
             if (other.target() != null) continue;
-            if (other.center().distanceToSqr(near.getCenter()) > BACKUP_RADIUS * BACKUP_RADIUS) continue;
+            if (other.center().distanceToSqr(Vec3.atCenterOf(near)) > BACKUP_RADIUS * BACKUP_RADIUS) continue;
             other.alertTo(near);
         }
     }
@@ -298,7 +303,7 @@ public final class SquadCoordinator {
         int cap = effectiveMaxSquadSize(squad.level(), near);
         if (squad.members().size() >= cap) return false;
 
-        AABB box = AABB.ofSize(near.getCenter(), BACKUP_RADIUS * 2.0, BACKUP_RADIUS, BACKUP_RADIUS * 2.0);
+        AABB box = AABB.ofSize(Vec3.atCenterOf(near), BACKUP_RADIUS * 2.0, BACKUP_RADIUS, BACKUP_RADIUS * 2.0);
         List<Mob> candidates = squad.level().getEntitiesOfClass(Mob.class, box, mob -> {
             MobData data = MobData.get(mob);
             return data.squadId() != squad.id()
@@ -326,6 +331,33 @@ public final class SquadCoordinator {
         addGoals(mob, new Squad(MobData.NO_SQUAD, level), Role.NONE);
     }
 
+    /** Bind non-squad capabilities without reviving role/squad tactics. */
+    private static void bindCoreGoals(Mob mob, ServerLevel level) {
+        if (Boolean.TRUE.equals(mob.getAttached(WarbandAttachments.WARBAND_GOALS_BOUND))) return;
+
+        MobGoalSelectorAccessor accessor = (MobGoalSelectorAccessor) mob;
+        accessor.warband$goalSelector().removeAllGoals(goal -> goal instanceof WarbandGoal);
+        accessor.warband$targetSelector().removeAllGoals(goal -> goal instanceof WarbandGoal);
+
+        Squad solo = new Squad(MobData.NO_SQUAD, level);
+        int core = Tactic.coreAntiCheeseFor(mob, MobData.get(mob).difficulty());
+        if (Tactic.has(core, Tactic.CREEPER_BREACH) && WarbandConfig.tacticEnabled(Tactic.CREEPER_BREACH)) {
+            accessor.warband$goalSelector().addGoal(0, new CreeperBreachGoal(mob, solo));
+        }
+        if (Tactic.has(core, Tactic.SIEGE_MINE) && WarbandConfig.tacticEnabled(Tactic.SIEGE_MINE)) {
+            accessor.warband$goalSelector().addGoal(0, new SiegeMineGoal(mob, solo));
+        }
+        if (mob instanceof Zombie || mob instanceof AbstractSkeleton) {
+            accessor.warband$goalSelector().addGoal(1, new SeekShelterGoal(mob));
+        }
+        accessor.warband$goalSelector().addGoal(-1, new DreadAvoidGoal(mob));
+        accessor.warband$goalSelector().addGoal(2, new ClimbToTargetGoal(mob));
+        if (canOpenDoors(mob) && WarbandDoorGoal.enableDoorPathing(mob)) {
+            accessor.warband$goalSelector().addGoal(2, new WarbandDoorGoal(mob));
+        }
+        mob.setAttached(WarbandAttachments.WARBAND_GOALS_BOUND, true);
+    }
+
     /** Lookup for perception hooks (e.g. arrow-miss alerts). */
     public static Squad getSquad(int id) {
         return SQUADS.get(id);
@@ -335,7 +367,7 @@ public final class SquadCoordinator {
         List<String> lines = new ArrayList<>();
         for (Squad squad : SQUADS.values()) {
             if (squad.level() != level || squad.isEmpty()) continue;
-            if (squad.center().distanceToSqr(pos.getCenter()) > SMART_SCAN_RADIUS * SMART_SCAN_RADIUS) continue;
+            if (squad.center().distanceToSqr(Vec3.atCenterOf(pos)) > SMART_SCAN_RADIUS * SMART_SCAN_RADIUS) continue;
             String lastKnown = squad.lastKnownPos() == null
                     ? "none"
                     : squad.lastKnownPos().getX() + " " + squad.lastKnownPos().getY() + " " + squad.lastKnownPos().getZ();
@@ -451,12 +483,13 @@ public final class SquadCoordinator {
         // Breaching sits above the stalk: a creeper that cannot reach you should stop
         // circling for a better angle and start removing the wall.
         if (hasEnabledTactic(data, Tactic.CREEPER_BREACH)) {
-            accessor.warband$goalSelector().addGoal(3, new CreeperBreachGoal(mob, squad));
+            accessor.warband$goalSelector().addGoal(0, new CreeperBreachGoal(mob, squad));
         }
-        // Priority 6: below melee and the positioning tactics, so digging is the last
-        // resort it is meant to be rather than a shortcut past a reachable player.
+        // The goal itself proves that the target is unreachable before starting.
+        // It must outrank vanilla melee movement once that proof succeeds; placing it
+        // below melee leaves the stalled attack goal holding MOVE forever.
         if (hasEnabledTactic(data, Tactic.SIEGE_MINE)) {
-            accessor.warband$goalSelector().addGoal(6, new SiegeMineGoal(mob, squad));
+            accessor.warband$goalSelector().addGoal(0, new SiegeMineGoal(mob, squad));
         }
         if (hasEnabledTactic(data, Tactic.ZOMBIE_HORDE)) {
             // Priority 3 so the encircle preempts vanilla melee approach until
@@ -509,7 +542,7 @@ public final class SquadCoordinator {
         // Universal on every stamped mob: get away from imminent detonations and
         // wardens. Priority 1 so it interrupts Warband's own positioning tactics —
         // no tactic is worth standing in a blast for.
-        accessor.warband$goalSelector().addGoal(1, new DreadAvoidGoal(mob));
+        accessor.warband$goalSelector().addGoal(-1, new DreadAvoidGoal(mob));
         // Universal: use a ladder you are already standing on. No goal flags, so it
         // layers under the attack goal's pathing rather than fighting it.
         accessor.warband$goalSelector().addGoal(2, new ClimbToTargetGoal(mob));
@@ -692,7 +725,7 @@ public final class SquadCoordinator {
         for (Squad squad : SQUADS.values()) {
             if (squad.level() != level || squad.members().size() >= cap) continue;
             if (squad.members().isEmpty() || !sameSquadFamily(squad.members().getFirst(), mob)) continue;
-            double dist = squad.center().distanceToSqr(pos.getCenter());
+            double dist = squad.center().distanceToSqr(Vec3.atCenterOf(pos));
             if (dist < bestDist) {
                 best = squad;
                 bestDist = dist;

@@ -5,6 +5,7 @@ import com.warband.compat.RaidCompat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Pulls a mob back from a threat when it is badly wounded or its squad is
@@ -61,7 +62,7 @@ public final class RetreatWhenLowGoal extends SquadGoal {
         BlockPos threat = target != null ? target.blockPosition() : rememberedTargetPos();
         if (threat == null) return false;
 
-        retreat = awayFrom(threat.getCenter(), 10.0);
+        retreat = awayFrom(Vec3.atCenterOf(threat), 10.0);
         return retreat != null;
     }
 

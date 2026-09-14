@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -41,7 +42,7 @@ public final class IllagerTerritory {
     }
 
     private static IllagerFaction dominantFactionNear(ServerLevel level, BlockPos pos, double radius, int minCount) {
-        AABB box = AABB.ofSize(pos.getCenter(), radius * 2, 48.0, radius * 2);
+        AABB box = AABB.ofSize(Vec3.atCenterOf(pos), radius * 2, 48.0, radius * 2);
         Map<IllagerFaction, Integer> counts = new EnumMap<>(IllagerFaction.class);
         for (Mob mob : level.getEntitiesOfClass(Mob.class, box, m -> IllagerKinds.isIllagerLike(m) && MobData.isStamped(m))) {
             IllagerFaction faction = IllagerFactionSystem.factionOrDefault(mob);

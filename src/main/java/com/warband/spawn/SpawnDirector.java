@@ -20,7 +20,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntitySpawnReason;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -141,9 +141,10 @@ public final class SpawnDirector {
                 || reason == EntitySpawnReason.EVENT;
         if (!SquadCoordinator.assignNaturalSpawn(mob, difficulty, spawnFormation)) {
             stampVanillaAi(mob, difficulty);
-            if (WarbandConfig.squadsEnabled) {
-                SquadCoordinator.bindStampedSolo(mob, level);
-            }
+            // Core anti-cheese features are independent of the squad-spawn switch.
+            // The old gate made door opening, blast avoidance, climbing, breaching,
+            // and mining all silently disappear when squadsEnabled=false.
+            SquadCoordinator.bindStampedSolo(mob, level);
         }
     }
 
@@ -156,11 +157,19 @@ public final class SpawnDirector {
     }
 
     /**
-     * Stamp a mob that was enhanced statistically but was not selected for
-     * tactical AI. Keeping the tactic mask clear prevents reload-only abilities.
+     * Stamp a mob that was not selected for squad tactics. Its mask retains only
+     * the core anti-cheese capabilities promised for its family.
      */
     public static void stampVanillaAi(Mob mob, double difficulty) {
-        stamp(mob, difficulty, false);
+        if (isDyingOrGone(mob)) return;
+        int tactics = Tactic.coreAntiCheeseFor(mob, difficulty);
+        MobData.set(mob, new MobData((float) difficulty, Role.NONE, MobData.NO_SQUAD, tactics));
+        IllagerFactionSystem.assignIfNeeded(mob);
+        FactionBanner.equipIfNeeded(mob);
+        IllagerIdentity.assignIfNeeded(mob, Role.NONE, difficulty);
+        if (WarbandConfig.statBuffsEnabled) {
+            applyStatBuffs(mob, difficulty);
+        }
     }
 
     private static void stamp(Mob mob, double difficulty, boolean assignTactics) {
@@ -230,7 +239,7 @@ public final class SpawnDirector {
         if (!(mob instanceof net.minecraft.world.entity.monster.illager.AbstractIllager)) return mob;
         if (!(mob.level() instanceof ServerLevel level)) return mob;
         net.minecraft.world.entity.monster.illager.Illusioner illusioner =
-                EntityType.ILLUSIONER.create(level, EntitySpawnReason.EVENT);
+                EntityTypes.ILLUSIONER.create(level, EntitySpawnReason.EVENT);
         if (illusioner == null) return mob;
         illusioner.snapTo(mob.getX(), mob.getY(), mob.getZ(), mob.getYRot(), mob.getXRot());
         var factionData = mob.getAttached(WarbandAttachments.ILLAGER_FACTION);
@@ -271,7 +280,7 @@ public final class SpawnDirector {
         double chance = (difficulty - 0.55) * 0.67;
         if (creeper.getRandom().nextDouble() >= chance) return;
 
-        LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(level, EntitySpawnReason.EVENT);
+        LightningBolt bolt = EntityTypes.LIGHTNING_BOLT.create(level, EntitySpawnReason.EVENT);
         if (bolt == null) return;
         bolt.snapTo(creeper.getX(), creeper.getY(), creeper.getZ());
         bolt.setVisualOnly(true);

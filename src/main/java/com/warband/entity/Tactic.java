@@ -7,12 +7,12 @@ import net.minecraft.world.entity.monster.EnderMan;
 import net.minecraft.world.entity.monster.Blaze;
 import net.minecraft.world.entity.monster.Ghast;
 import net.minecraft.world.entity.monster.Guardian;
-import net.minecraft.world.entity.monster.MagmaCube;
+import net.minecraft.world.entity.monster.cubemob.MagmaCube;
 import net.minecraft.world.entity.monster.Phantom;
 import net.minecraft.world.entity.monster.Ravager;
 import net.minecraft.world.entity.monster.RangedAttackMob;
 import net.minecraft.world.entity.monster.Shulker;
-import net.minecraft.world.entity.monster.Slime;
+import net.minecraft.world.entity.monster.cubemob.Slime;
 import net.minecraft.world.entity.monster.Witch;
 import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.entity.monster.Zoglin;
@@ -78,6 +78,29 @@ public enum Tactic {
 
     public static int chooseFor(Mob mob, double difficulty, Role role) {
         return chooseForSubjects(subjectsFor(mob), difficulty, role);
+    }
+
+    /**
+     * Capabilities promised as general anti-cheese behaviour rather than as a
+     * randomly selected squad flourish.  A natural mob may miss the squad roll,
+     * but a qualifying zombie must still know how to breach a wall and a creeper
+     * must still know how to use its explosion against one.
+     */
+    public static int coreAntiCheeseFor(Mob mob, double difficulty) {
+        return coreAntiCheeseForSubjects(subjectsFor(mob), difficulty);
+    }
+
+    static int coreAntiCheeseForSubjects(EnumSet<Subject> subjects, double difficulty) {
+        int mask = 0;
+        if (subjects.contains(Subject.CREEPER) && difficulty >= 0.60) {
+            mask |= CREEPER_BREACH.bit;
+        }
+        if ((subjects.contains(Subject.ZOMBIE_FAMILY) && difficulty >= 0.55)
+                || (subjects.contains(Subject.ILLAGER_LIKE) && difficulty >= 0.60)
+                || (subjects.contains(Subject.RAVAGER) && difficulty >= 0.50)) {
+            mask |= SIEGE_MINE.bit;
+        }
+        return mask;
     }
 
     static int chooseForSubjects(EnumSet<Subject> subjects, double difficulty, Role role) {

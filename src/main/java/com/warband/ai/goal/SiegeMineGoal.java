@@ -72,6 +72,8 @@ public final class SiegeMineGoal extends SquadGoal {
     private static final int MAX_BLOCKS_PER_BREACH = 4;
     /** How far ahead the hitbox is swept when looking for the obstruction. */
     private static final double STEP_PROBE = 0.9;
+    /** Search far enough to find the wall even when vanilla gives up pathing early. */
+    private static final double MAX_OBSTRUCTION_SCAN = 8.0;
 
     private BlockPos digTarget;
     private @Nullable LivingEntity siegeTarget;
@@ -122,15 +124,15 @@ public final class SiegeMineGoal extends SquadGoal {
         if (frightened()) return false;
         if (!(mob.level() instanceof ServerLevel level)) return false;
         if (!isBreachable(level, digTarget)) return false;
-        // Stop mid-dig the moment walking there starts working again — otherwise the
-        // mob keeps holding the MOVE flag and stands frozen at a wall it no longer
-        // needs to remove, which reads to a player as a mob that stopped caring.
-        if (siegeTarget != null && siegeTarget.isAlive()
-                && canReach(siegeTarget, siegeTarget.blockPosition())) {
-            return false;
-        }
-        // Stay in reach of what we are digging; being knocked away cancels it.
-        return mob.distanceToSqr(Vec3.atCenterOf(digTarget)) <= 9.0;
+        // Do not re-path while the cracking animation is active. Minecraft can
+        // transiently report a partial/recomputed route as reachable near an
+        // obstruction; cancelling here reset progress just before the block broke.
+        // canUse() already established that a breach was necessary, and one block is
+        // a small enough commitment to finish before reconsidering the route.
+        // The obstruction may have been found several blocks ahead. Keep the goal
+        // while approaching it; only start applying crack progress once in reach.
+        return mob.distanceToSqr(Vec3.atCenterOf(digTarget))
+                <= MAX_OBSTRUCTION_SCAN * MAX_OBSTRUCTION_SCAN;
     }
 
     @Override
@@ -140,7 +142,11 @@ public final class SiegeMineGoal extends SquadGoal {
 
     @Override
     public void start() {
-        mob.getNavigation().stop();
+        if (mob.distanceToSqr(Vec3.atCenterOf(digTarget)) <= 9.0) {
+            mob.getNavigation().stop();
+        } else {
+            moveTo(digTarget);
+        }
         WarbandDebug.event("SIEGE_DIG_START", mob, String.format(
                 "diff=%.2f block=%s target=%s digTicks=%d broken=%d",
                 MobData.get(mob).difficulty(),
@@ -154,6 +160,11 @@ public final class SiegeMineGoal extends SquadGoal {
         if (digTarget == null || !(mob.level() instanceof ServerLevel level)) return;
 
         mob.getLookControl().setLookAt(Vec3.atCenterOf(digTarget));
+        if (mob.distanceToSqr(Vec3.atCenterOf(digTarget)) > 9.0) {
+            moveTo(digTarget);
+            return;
+        }
+        mob.getNavigation().stop();
         digTicks++;
 
         // Vanilla block-break cracks: the telegraph. A player should always get the
@@ -250,8 +261,12 @@ public final class SiegeMineGoal extends SquadGoal {
         Vec3 toGoal = Vec3.atCenterOf(goal).subtract(mob.position());
         Vec3 flat = new Vec3(toGoal.x, 0.0, toGoal.z);
         if (flat.lengthSqr() > 0.01) {
-            BlockPos blocking = nearestBlockingBlock(level, flat.normalize().scale(STEP_PROBE));
-            if (blocking != null) return blocking;
+            Vec3 direction = flat.normalize();
+            double scanDistance = Math.min(flat.length(), MAX_OBSTRUCTION_SCAN);
+            for (double distance = STEP_PROBE; distance <= scanDistance; distance += STEP_PROBE) {
+                BlockPos blocking = nearestBlockingBlock(level, direction.scale(distance));
+                if (blocking != null) return blocking;
+            }
         }
 
         BlockPos feet = mob.blockPosition();

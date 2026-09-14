@@ -69,7 +69,21 @@ class TacticTest {
         assertTrue(Tactic.has(mask, Tactic.PRESSURE_UNREACHABLE));
     }
 
+    @Test
+    void coreAntiCheeseThresholdsMatchAdvertisedFamilies() {
+        assertFalse(Tactic.has(core(Tactic.Subject.ZOMBIE_FAMILY, 0.54), Tactic.SIEGE_MINE));
+        assertTrue(Tactic.has(core(Tactic.Subject.ZOMBIE_FAMILY, 0.55), Tactic.SIEGE_MINE));
+        assertFalse(Tactic.has(core(Tactic.Subject.ILLAGER_LIKE, 0.59), Tactic.SIEGE_MINE));
+        assertTrue(Tactic.has(core(Tactic.Subject.ILLAGER_LIKE, 0.60), Tactic.SIEGE_MINE));
+        assertFalse(Tactic.has(core(Tactic.Subject.CREEPER, 0.59), Tactic.CREEPER_BREACH));
+        assertTrue(Tactic.has(core(Tactic.Subject.CREEPER, 0.60), Tactic.CREEPER_BREACH));
+    }
+
     private static int choose(Tactic.Subject subject, double difficulty) {
         return Tactic.chooseForSubjects(EnumSet.of(subject), difficulty, Role.NONE);
+    }
+
+    private static int core(Tactic.Subject subject, double difficulty) {
+        return Tactic.coreAntiCheeseForSubjects(EnumSet.of(subject), difficulty);
     }
 }

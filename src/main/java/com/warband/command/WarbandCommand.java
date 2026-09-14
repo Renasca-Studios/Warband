@@ -27,9 +27,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.EntitySpawnReason;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.entity.monster.zombie.Zombie;
@@ -304,7 +304,7 @@ public final class WarbandCommand {
         ServerLevel level = source.getLevel();
         BlockPos pos = BlockPos.containing(source.getPosition());
 
-        Zombie zombie = EntityType.ZOMBIE.spawn(level, pos, EntitySpawnReason.COMMAND);
+        Zombie zombie = EntityTypes.ZOMBIE.spawn(level, pos, EntitySpawnReason.COMMAND);
         if (zombie == null) {
             source.sendFailure(Component.literal("[Warband] Failed to spawn debug zombie."));
             return 0;

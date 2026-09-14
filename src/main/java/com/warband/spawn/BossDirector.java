@@ -16,7 +16,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
@@ -238,7 +238,7 @@ public final class BossDirector {
                 Vec3 jitter = new Vec3(wither.getRandom().nextDouble() - 0.5, wither.getRandom().nextDouble() * 0.35, wither.getRandom().nextDouble() - 0.5).scale(3.0);
                 direction = focus.add(jitter).subtract(center).normalize();
             }
-            Entity skull = EntityType.WITHER_SKULL.create(level, EntitySpawnReason.EVENT);
+            Entity skull = EntityTypes.WITHER_SKULL.create(level, EntitySpawnReason.EVENT);
             if (skull == null) continue;
             if (skull instanceof Projectile projectile) {
                 projectile.setOwner(wither);
@@ -257,7 +257,7 @@ public final class BossDirector {
             WitherSkeleton skeleton;
             spawningWitherMinion = true;
             try {
-                skeleton = EntityType.WITHER_SKELETON.spawn(level, pos, EntitySpawnReason.EVENT);
+                skeleton = EntityTypes.WITHER_SKELETON.spawn(level, pos, EntitySpawnReason.EVENT);
             } finally {
                 spawningWitherMinion = false;
             }

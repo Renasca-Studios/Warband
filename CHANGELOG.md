@@ -1,9 +1,18 @@
 # Changelog
 
-## 1.4.1
+## 1.5.0
 
-- Every name, title and message the mod shows can now be translated. Warband ships English and falls back to it, so nothing changes if you have no language file — but a resource pack or a translation can now replace any of it, including the mob rank ladder, the five faction names and the faction messages.
-- Illager mods are now recognised through datapack tags instead of a built-in list. `#warband:illager_like` decides what Warband treats as an illager, with `#warband:illager_support`, `#warband:illager_summoner` and `#warband:faction_seat_boss` for roles. Illager Invasion works as before with no setup; any other illager mod can now be added by a datapack, without waiting on a Warband update.
+First release for Minecraft 26.2.
+
+- Updated to Minecraft 26.2.
+- Mobs now scatter from a primed sulfur cube, 26.2's new mob. Its explosive form goes off with the same force as a creeper, so it is treated as the same kind of threat. Sulfur cubes are otherwise left alone — they are not hostile, so Warband gives them no tactics.
+- Every name, title and message the mod shows can now be translated. Warband ships English and falls back to it, so nothing changes if you have no language file.
+- Illager mods are now recognised through datapack tags instead of a built-in list. Illager Invasion works as before with no additional setup.
+- Fixed siege miners stalling before a wall or repeatedly resetting block-crack progress. They now find the first real obstruction ahead, walk into digging range, and finish the breach before reconsidering their route.
+- Fixed creeper breaching and siege mining being starved by lower-priority combat movement, and made blast avoidance reliably outrank both.
+- Fixed core anti-cheese features only appearing on mobs that happened to win the random squad roll. Qualifying solo zombies, illagers, ravagers and creepers now receive the advertised mining or breaching behavior.
+- Fixed `squadsEnabled=false` also disabling unrelated door opening, blast avoidance, ladder climbing, siege mining and creeper breaching.
+- Added Minecraft GameTest coverage for solo zombie, creeper and vindicator goal binding and an end-to-end zombie wall breach.
 
 ## 1.4.0
 

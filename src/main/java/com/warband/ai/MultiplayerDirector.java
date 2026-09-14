@@ -124,7 +124,7 @@ public final class MultiplayerDirector {
 
     public static boolean underSmartBudget(ServerLevel level, BlockPos pos) {
         int budget = effectiveSmartBudget(level, pos);
-        AABB box = AABB.ofSize(pos.getCenter(), COMBAT_RADIUS * 2.0, COMBAT_RADIUS, COMBAT_RADIUS * 2.0);
+        AABB box = AABB.ofSize(Vec3.atCenterOf(pos), COMBAT_RADIUS * 2.0, COMBAT_RADIUS, COMBAT_RADIUS * 2.0);
         int smart = level.getEntitiesOfClass(Mob.class, box, MultiplayerDirector::hasWarbandAi).size();
         return smart < budget;
     }
@@ -173,7 +173,7 @@ public final class MultiplayerDirector {
     }
 
     private static List<ServerPlayer> playersNear(ServerLevel level, BlockPos pos, double radius) {
-        AABB box = AABB.ofSize(pos.getCenter(), radius * 2.0, radius, radius * 2.0);
+        AABB box = AABB.ofSize(Vec3.atCenterOf(pos), radius * 2.0, radius, radius * 2.0);
         return level.getEntitiesOfClass(ServerPlayer.class, box,
                 player -> player.isAlive() && !player.isSpectator());
     }
