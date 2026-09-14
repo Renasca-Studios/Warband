@@ -148,7 +148,10 @@ public final class SquadCoordinator {
                 SpawnDirector.tryStampLoaded(mob, level);
                 return;
             }
-            if (!WarbandConfig.squadsEnabled) return;
+            if (!WarbandConfig.squadsEnabled) {
+                bindCoreGoals(mob, level);
+                return;
+            }
             if (Boolean.TRUE.equals(mob.getAttached(WarbandAttachments.WARBAND_GOALS_BOUND))) return;
 
             MobData data = MobData.get(mob);
@@ -328,6 +331,33 @@ public final class SquadCoordinator {
         addGoals(mob, new Squad(MobData.NO_SQUAD, level), Role.NONE);
     }
 
+    /** Bind non-squad capabilities without reviving role/squad tactics. */
+    private static void bindCoreGoals(Mob mob, ServerLevel level) {
+        if (Boolean.TRUE.equals(mob.getAttached(WarbandAttachments.WARBAND_GOALS_BOUND))) return;
+
+        MobGoalSelectorAccessor accessor = (MobGoalSelectorAccessor) mob;
+        accessor.warband$goalSelector().removeAllGoals(goal -> goal instanceof WarbandGoal);
+        accessor.warband$targetSelector().removeAllGoals(goal -> goal instanceof WarbandGoal);
+
+        Squad solo = new Squad(MobData.NO_SQUAD, level);
+        int core = Tactic.coreAntiCheeseFor(mob, MobData.get(mob).difficulty());
+        if (Tactic.has(core, Tactic.CREEPER_BREACH) && WarbandConfig.tacticEnabled(Tactic.CREEPER_BREACH)) {
+            accessor.warband$goalSelector().addGoal(0, new CreeperBreachGoal(mob, solo));
+        }
+        if (Tactic.has(core, Tactic.SIEGE_MINE) && WarbandConfig.tacticEnabled(Tactic.SIEGE_MINE)) {
+            accessor.warband$goalSelector().addGoal(0, new SiegeMineGoal(mob, solo));
+        }
+        if (mob instanceof Zombie || mob instanceof AbstractSkeleton) {
+            accessor.warband$goalSelector().addGoal(1, new SeekShelterGoal(mob));
+        }
+        accessor.warband$goalSelector().addGoal(-1, new DreadAvoidGoal(mob));
+        accessor.warband$goalSelector().addGoal(2, new ClimbToTargetGoal(mob));
+        if (canOpenDoors(mob) && WarbandDoorGoal.enableDoorPathing(mob)) {
+            accessor.warband$goalSelector().addGoal(2, new WarbandDoorGoal(mob));
+        }
+        mob.setAttached(WarbandAttachments.WARBAND_GOALS_BOUND, true);
+    }
+
     /** Lookup for perception hooks (e.g. arrow-miss alerts). */
     public static Squad getSquad(int id) {
         return SQUADS.get(id);
@@ -453,12 +483,13 @@ public final class SquadCoordinator {
         // Breaching sits above the stalk: a creeper that cannot reach you should stop
         // circling for a better angle and start removing the wall.
         if (hasEnabledTactic(data, Tactic.CREEPER_BREACH)) {
-            accessor.warband$goalSelector().addGoal(3, new CreeperBreachGoal(mob, squad));
+            accessor.warband$goalSelector().addGoal(0, new CreeperBreachGoal(mob, squad));
         }
-        // Priority 6: below melee and the positioning tactics, so digging is the last
-        // resort it is meant to be rather than a shortcut past a reachable player.
+        // The goal itself proves that the target is unreachable before starting.
+        // It must outrank vanilla melee movement once that proof succeeds; placing it
+        // below melee leaves the stalled attack goal holding MOVE forever.
         if (hasEnabledTactic(data, Tactic.SIEGE_MINE)) {
-            accessor.warband$goalSelector().addGoal(6, new SiegeMineGoal(mob, squad));
+            accessor.warband$goalSelector().addGoal(0, new SiegeMineGoal(mob, squad));
         }
         if (hasEnabledTactic(data, Tactic.ZOMBIE_HORDE)) {
             // Priority 3 so the encircle preempts vanilla melee approach until
@@ -511,7 +542,7 @@ public final class SquadCoordinator {
         // Universal on every stamped mob: get away from imminent detonations and
         // wardens. Priority 1 so it interrupts Warband's own positioning tactics —
         // no tactic is worth standing in a blast for.
-        accessor.warband$goalSelector().addGoal(1, new DreadAvoidGoal(mob));
+        accessor.warband$goalSelector().addGoal(-1, new DreadAvoidGoal(mob));
         // Universal: use a ladder you are already standing on. No goal flags, so it
         // layers under the attack goal's pathing rather than fighting it.
         accessor.warband$goalSelector().addGoal(2, new ClimbToTargetGoal(mob));

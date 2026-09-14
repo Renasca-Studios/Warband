@@ -80,6 +80,29 @@ public enum Tactic {
         return chooseForSubjects(subjectsFor(mob), difficulty, role);
     }
 
+    /**
+     * Capabilities promised as general anti-cheese behaviour rather than as a
+     * randomly selected squad flourish.  A natural mob may miss the squad roll,
+     * but a qualifying zombie must still know how to breach a wall and a creeper
+     * must still know how to use its explosion against one.
+     */
+    public static int coreAntiCheeseFor(Mob mob, double difficulty) {
+        return coreAntiCheeseForSubjects(subjectsFor(mob), difficulty);
+    }
+
+    static int coreAntiCheeseForSubjects(EnumSet<Subject> subjects, double difficulty) {
+        int mask = 0;
+        if (subjects.contains(Subject.CREEPER) && difficulty >= 0.60) {
+            mask |= CREEPER_BREACH.bit;
+        }
+        if ((subjects.contains(Subject.ZOMBIE_FAMILY) && difficulty >= 0.55)
+                || (subjects.contains(Subject.ILLAGER_LIKE) && difficulty >= 0.60)
+                || (subjects.contains(Subject.RAVAGER) && difficulty >= 0.50)) {
+            mask |= SIEGE_MINE.bit;
+        }
+        return mask;
+    }
+
     static int chooseForSubjects(EnumSet<Subject> subjects, double difficulty, Role role) {
         int mask = 0;
         if (subjects.contains(Subject.SPIDER)) {

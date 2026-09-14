@@ -14,6 +14,15 @@ loom {
     accessWidenerPath = file("src/main/resources/warband.accesswidener")
 }
 
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = "warband-gametest"
+        enableGameTests = true
+        eula = true
+    }
+}
+
 repositories {
     mavenCentral()
 }

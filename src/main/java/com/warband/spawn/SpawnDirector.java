@@ -141,9 +141,10 @@ public final class SpawnDirector {
                 || reason == EntitySpawnReason.EVENT;
         if (!SquadCoordinator.assignNaturalSpawn(mob, difficulty, spawnFormation)) {
             stampVanillaAi(mob, difficulty);
-            if (WarbandConfig.squadsEnabled) {
-                SquadCoordinator.bindStampedSolo(mob, level);
-            }
+            // Core anti-cheese features are independent of the squad-spawn switch.
+            // The old gate made door opening, blast avoidance, climbing, breaching,
+            // and mining all silently disappear when squadsEnabled=false.
+            SquadCoordinator.bindStampedSolo(mob, level);
         }
     }
 
@@ -156,11 +157,19 @@ public final class SpawnDirector {
     }
 
     /**
-     * Stamp a mob that was enhanced statistically but was not selected for
-     * tactical AI. Keeping the tactic mask clear prevents reload-only abilities.
+     * Stamp a mob that was not selected for squad tactics. Its mask retains only
+     * the core anti-cheese capabilities promised for its family.
      */
     public static void stampVanillaAi(Mob mob, double difficulty) {
-        stamp(mob, difficulty, false);
+        if (isDyingOrGone(mob)) return;
+        int tactics = Tactic.coreAntiCheeseFor(mob, difficulty);
+        MobData.set(mob, new MobData((float) difficulty, Role.NONE, MobData.NO_SQUAD, tactics));
+        IllagerFactionSystem.assignIfNeeded(mob);
+        FactionBanner.equipIfNeeded(mob);
+        IllagerIdentity.assignIfNeeded(mob, Role.NONE, difficulty);
+        if (WarbandConfig.statBuffsEnabled) {
+            applyStatBuffs(mob, difficulty);
+        }
     }
 
     private static void stamp(Mob mob, double difficulty, boolean assignTactics) {
