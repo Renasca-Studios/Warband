@@ -2,12 +2,12 @@
 
 ## 1.5.0
 
-Requires Minecraft 26.2. Warband 1.4.0 remains the last release for 26.1.2.
+First release for Minecraft 26.2.
 
-- Updated to Minecraft 26.2. Every behaviour, tactic and config key carries over unchanged; existing worlds keep their faction standing, grudges and named survivors.
+- Updated to Minecraft 26.2.
 - Mobs now scatter from a primed sulfur cube, 26.2's new mob. Its explosive form goes off with the same force as a creeper, so it is treated as the same kind of threat. Sulfur cubes are otherwise left alone — they are not hostile, so Warband gives them no tactics.
-- Every name, title and message the mod shows can now be translated. Warband ships English and falls back to it, so nothing changes if you have no language file — but a resource pack or a translation can now replace any of it, including the mob rank ladder, the five faction names and the faction messages.
-- Illager mods are now recognised through datapack tags instead of a built-in list. `#warband:illager_like` decides what Warband treats as an illager, with `#warband:illager_support`, `#warband:illager_summoner` and `#warband:faction_seat_boss` for roles. Illager Invasion works as before with no setup; any other illager mod can now be added by a datapack, without waiting on a Warband update.
+- Every name, title and message the mod shows can now be translated. Warband ships English and falls back to it, so nothing changes if you have no language file.
+- Illager mods are now recognised through datapack tags instead of a built-in list. Illager Invasion works as before with no additional setup.
 
 ## 1.4.0
 
